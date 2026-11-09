@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brasileirão em Dados</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F1F4F6; --surface:#FFFFFF; --ink:#12263A; --muted:#5B6B7A; --line:#D5DDE3;
+  --win:#0F7A63; --draw:#9AA7B2; --loss:#C8442F; --accent:#F2C230;
+  --font:"Archivo",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1A26; --surface:#15283A; --ink:#EAF0F4; --muted:#9DB0C0; --line:#27405A;
+    --win:#35B596; --draw:#6F8394; --loss:#E8705B;
+  }
+}
+*{box-sizing:border-box}
+html{color-scheme:light dark}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);line-height:1.5}
+.wrap{max-width:960px;margin:0 auto;padding:28px 16px 48px}
+header h1{font-size:clamp(2rem,7vw,3.4rem);line-height:1;margin:0 0 10px;font-weight:800;letter-spacing:-.02em}
+header h1 span{background:linear-gradient(transparent 62%,var(--accent) 62%)}
+header p{margin:0;color:var(--muted);max-width:60ch}
+.stats{display:flex;flex-wrap:wrap;gap:10px 28px;margin:22px 0 8px}
+.stat b{display:block;font-size:1.5rem;font-weight:800}
+.stat small{color:var(--muted)}
+section{margin-top:34px}
+h2{font-size:1.25rem;margin:0 0 4px;font-weight:800}
+.sub{color:var(--muted);margin:0 0 12px;font-size:.92rem}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:8px;overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:640px;font-variant-numeric:tabular-nums}
+th,td{padding:9px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-weight:600;color:var(--muted);font-size:.85rem}
+td:first-child,th:first-child{text-align:center;width:36px;color:var(--muted)}
+td:nth-child(2),th:nth-child(2){text-align:left;font-weight:600}
+tr:last-child td{border-bottom:0}
+tbody tr:nth-child(-n+4) td:first-child{box-shadow:inset 3px 0 var(--win)}
+tbody tr:nth-last-child(-n+4) td:first-child{box-shadow:inset 3px 0 var(--loss)}
+.pts{font-weight:800}
+.bar{display:inline-block;width:70px;height:8px;background:var(--line);border-radius:4px;vertical-align:middle;margin-left:8px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--win)}
+.form{display:inline-flex;gap:3px}
+.form i{width:18px;height:18px;border-radius:3px;font-style:normal;font-size:.68rem;font-weight:800;color:#fff;display:grid;place-items:center}
+.V{background:var(--win)}.E{background:var(--draw)}.D{background:var(--loss)}
+.home{padding:6px 12px 10px}
+.row{display:grid;grid-template-columns:110px 1fr 1fr;gap:8px;align-items:center;padding:5px 0;font-size:.9rem}
+.row span:first-child{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.m{display:flex;align-items:center;gap:6px;font-variant-numeric:tabular-nums}
+.m div{height:12px;border-radius:2px;background:var(--win)}
+.m.fora div{background:var(--accent)}
+.legend{display:flex;gap:16px;font-size:.85rem;color:var(--muted);padding:10px 12px 0}
+.legend b{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px}
+.note{margin-top:34px;padding:12px 14px;border-left:4px solid var(--accent);background:var(--surface);font-size:.9rem;color:var(--muted)}
+footer{margin-top:28px;color:var(--muted);font-size:.85rem}
+a{color:inherit}
+a:focus-visible,.box:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Brasileirão <span>em dados</span></h1>
+  <p>Classificação, desempenho em casa e fora e forma recente de cada time, calculados a partir dos resultados oficiais.</p>
+  <div class="stats" id="stats"></div>
+</header>
+
+<section>
+  <h2>Classificação</h2>
+  <p class="sub">Aproveitamento é a porcentagem dos pontos disputados que o time conquistou.</p>
+  <div class="box" tabindex="0"><table id="tabela"><thead><tr>
+    <th>#</th><th>Time</th><th>Pts</th><th>J</th><th>V</th><th>E</th><th>D</th><th>SG</th><th>Aproveitamento</th><th>Últimos 5</th>
+  </tr></thead><tbody></tbody></table></div>
+</section>
+
+<section>
+  <h2>Casa e fora</h2>
+  <p class="sub">Média de pontos por jogo. Quanto maior a diferença, mais o time depende do seu estádio.</p>
+  <div class="box home" id="mando"></div>
+</section>
+
+<p class="note" id="aviso" hidden>Você está vendo dados de exemplo. Coloque saida_tabela.csv, saida_mando.csv e saida_forma.csv na mesma pasta deste arquivo para mostrar os dados reais.</p>
+
+<footer>
+  Fonte dos dados: football-data.co.uk. Projeto de análise de dados esportivos, sem fins de apostas.
+</footer>
+</div>
+
+<script>
+var EX_TAB="Time,J,V,E,D,GP,GC,Pts,SG,Aproveit_%\nTime A,10,7,2,1,19,7,23,12,76.7\nTime B,10,6,2,2,15,8,20,7,66.7\nTime C,10,4,3,3,12,11,15,1,50.0\nTime D,10,3,2,5,9,14,11,-5,36.7\nTime E,10,1,2,7,6,21,5,-15,16.7";
+var EX_MAN="Time,Casa,Fora,Dif_casa_fora\nTime A,2.6,2.0,0.6\nTime B,2.2,1.8,0.4\nTime C,1.8,1.2,0.6\nTime D,1.4,0.8,0.6\nTime E,0.8,0.2,0.6";
+var EX_FRM="Time,Ultimos_5,Pts\nTime A,VVEVV,13\nTime B,VDVEV,10\nTime C,EDVEE,6\nTime D,DDVDE,4\nTime E,DDDED,1";
+
+function parse(t){
+  var l=t.trim().split(/\r?\n/), h=l.shift().split(",");
+  return l.map(function(r){var c=r.split(","),o={};h.forEach(function(k,i){o[k]=c[i]});return o});
+}
+function load(f,ex){
+  return fetch(f).then(function(r){if(!r.ok)throw 0;return r.text()})
+    .then(function(t){return {rows:parse(t),demo:false}})
+    .catch(function(){return {rows:parse(ex),demo:true}});
+}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+Promise.all([load("saida_tabela.csv",EX_TAB),load("saida_mando.csv",EX_MAN),load("saida_forma.csv",EX_FRM)])
+.then(function(a){
+  var tab=a[0].rows, man=a[1].rows, frm=a[2].rows;
+  if(a[0].demo||a[1].demo||a[2].demo) document.getElementById("aviso").hidden=false;
+  var forma={}; frm.forEach(function(r){forma[r.Time]=r.Ultimos_5||""});
+
+  var jogos=0,gols=0;
+  tab.forEach(function(r){jogos+=+r.J;gols+=+r.GP});
+  var lider=tab[0];
+  document.getElementById("stats").innerHTML=
+    '<div class="stat"><b>'+esc(lider.Time)+'</b><small>líder</small></div>'+
+    '<div class="stat"><b>'+(jogos/2)+'</b><small>jogos disputados</small></div>'+
+    '<div class="stat"><b>'+(gols/(jogos/2)).toFixed(2).replace(".",",")+'</b><small>gols por jogo</small></div>';
+
+  var tb=document.querySelector("#tabela tbody");
+  tab.forEach(function(r,i){
+    var ap=parseFloat(r["Aproveit_%"]);
+    var f=(forma[r.Time]||"").split("").map(function(c){return '<i class="'+c+'">'+c+'</i>'}).join("");
+    tb.insertAdjacentHTML("beforeend",
+      '<tr><td>'+(i+1)+'</td><td>'+esc(r.Time)+'</td><td class="pts">'+r.Pts+'</td><td>'+r.J+'</td><td>'+r.V+'</td><td>'+r.E+'</td><td>'+r.D+'</td><td>'+r.SG+
+      '</td><td>'+ap.toFixed(1).replace(".",",")+'%<span class="bar"><i style="width:'+ap+'%"></i></span></td><td><span class="form">'+f+'</span></td></tr>');
+  });
+
+  var max=Math.max.apply(null,man.map(function(r){return Math.max(+r.Casa,+r.Fora)}))||1;
+  var box=document.getElementById("mando");
+  box.insertAdjacentHTML("beforeend",'<div class="legend"><span><b style="background:var(--win)"></b>Em casa</span><span><b style="background:var(--accent)"></b>Fora</span></div>');
+  man.sort(function(x,y){return y.Dif_casa_fora-x.Dif_casa_fora}).forEach(function(r){
+    box.insertAdjacentHTML("beforeend",
+      '<div class="row"><span>'+esc(r.Time)+'</span>'+
+      '<div class="m"><div style="width:'+(+r.Casa/max*100)+'%"></div>'+(+r.Casa).toFixed(2).replace(".",",")+'</div>'+
+      '<div class="m fora"><div style="width:'+(+r.Fora/max*100)+'%"></div>'+(+r.Fora).toFixed(2).replace(".",",")+'</div></div>');
+  });
+});
+</script>
+</body>
+</html>
